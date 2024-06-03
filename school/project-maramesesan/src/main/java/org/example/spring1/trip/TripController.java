@@ -1,17 +1,10 @@
 package org.example.spring1.trip;
 
-import ch.qos.logback.core.model.Model;
 import lombok.RequiredArgsConstructor;
-import org.example.spring1.exception.EntityNotFoundException;
-import org.example.spring1.flight.model.Flight;
-import org.example.spring1.flight.model.dto.FlightDTO;
-import org.example.spring1.global.SingleBodyRequestDTO;
-import org.example.spring1.location.model.dto.LocationDTO;
-import org.example.spring1.trip.model.Trip;
+
 import org.example.spring1.trip.model.dto.TripCreationDTO;
 import org.example.spring1.trip.model.dto.TripCreationRequest;
-import org.example.spring1.trip.model.dto.TripDTO;
-import org.example.spring1.trip.model.dto.TripLocationDTO;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -21,8 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Date;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
