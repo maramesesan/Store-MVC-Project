@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trip Details</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Trip Details</h1>
+<div id="tripDetailsContainer"></div>
+<button id="createTripButton">Create Trip</button>
+
+<script>
+    function redirectToFlightsPage(start, end) {
+        window.location.href = `http://localhost:8088/api/flights/update?start=${start}&end=${end}`;
+    }
+
+    function handleClick(startId, endId) {
+        // getTripInfo(userId, startDate)
+        redirectToFlightsPage(startId, endId);
+
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        displayTripDetails();
+
+        document.getElementById('createTripButton').addEventListener('click', function() {
+            createTrip();
+        });
+    });
+
+
+    async function displayTripDetails() {
+        // const startDate = localStorage.getItem('startDate');
+        // const endDate = localStorage.getItem('endDate');
+        const userId = localStorage.getItem('userId');
+        const locationIds = JSON.parse(sessionStorage.getItem('selectedLocations'));
+        const roomId = sessionStorage.getItem('roomId');
+        const flightIds = JSON.parse(sessionStorage.getItem('selectedFlights'));
+
+        // Fetch location details
+        const locations = await Promise.all(locationIds.map(id => fetch(`/api/locations/view/${id}`).then(response => response.json())));
+
+        // Fetch room details
+        const room = await fetch(`/api/rooms/selected/${roomId}`).then(response => response.json());
+
+        // Fetch flight details
+        const flights = await Promise.all(flightIds.map(id => fetch(`/api/flights/selected/${id}`).then(response => response.json())));
+
+        const tripDetailsContainer = document.getElementById('tripDetailsContainer');
+
+
+        const startDate = flights[0].date.split('T')[0];
+        const endDate = flights[flights.length - 1].date.split('T')[0];
+
+        localStorage.setItem('startDate', startDate);
+        localStorage.setItem('userId', userId);
+
+        const tripInfo = `
+            <h2>Trip Details</h2>
+            <p><strong>Start Date:</strong> ${startDate}</p>
+            <p><strong>End Date:</strong> ${endDate}</p>
+            <h3>Locations</h3>
+            <table>
+                <tr>
+                    <th>Location Name</th>
+                </tr>
+                ${locations.map(location => `
+                    <tr>
+                        <td>${location.name}</td>
+                    </tr>
+                `).join('')}
+            </table>
+
+            <h3>Flights</h3>
+            <table>
+                <tr>
+                    <th>Company</th>
+                    <th>Start Location</th>
+                    <th>End Location</th>
+                </tr>
+                ${flights.map(flight => `
+                    <tr onclick="handleClick(${flight.startLocation.id}, ${flight.endLocation.id})">
+                        <td>${flight.company}</td>
+                        <td>${flight.startLocation.name}</td>
+                        <td>${flight.endLocation.name}</td>
+                    </tr>
+                `).join('')}
+            </table>
+
+            <h3>Room</h3>
+            <table>
+                <tr>
+                    <th>Room Name</th>
+                    <th>Accommodation Name</th>
+                </tr>
+                <tr>
+                    <td>${room.numberPeople}</td>
+                    <td>${room.accommodation.name}</td>
+                </tr>
+            </table>
+        `;
+
+        tripDetailsContainer.innerHTML = tripInfo;
+    }
+
+    async function createTrip() {
+        const userId = localStorage.getItem('userId');
+        const locationIds = JSON.parse(sessionStorage.getItem('selectedLocations'));
+        const roomId = sessionStorage.getItem('roomId');
+        const flightIds = JSON.parse(sessionStorage.getItem('selectedFlights'));
+
+        const flights = await Promise.all(flightIds.map(id => fetch(`/api/flights/selected/${id}`).then(response => response.json())));
+
+        flights.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const startDate = flights[0].date.split('T')[0];
+        const endDate = flights[flights.length - 1].date.split('T')[0];
+
+        const tripCreationDTO = {
+            dto: {
+                userId: userId,
+                startDate: startDate,
+                endDate: endDate
+            },
+            locationId: locationIds,
+            roomId: roomId,
+            flightIds: flightIds
+        };
+
+        fetch('/api/trips', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(tripCreationDTO)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Trip created successfully:', data);
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+
+
+    }
+</script>
+</body>
+</html>
